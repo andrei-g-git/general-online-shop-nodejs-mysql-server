@@ -1,0 +1,18 @@
+{
+  "name": "ecommerce-sql",
+  "version": "1.0.0",
+  "description": "sql server for the general online store",
+  "main": "server.js",
+  "scripts": {
+    "server": "nodemon server.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
