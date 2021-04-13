@@ -56,6 +56,7 @@ app.post("/api/cart/modify", (request, response) => {
     console.log(sql);
     db.query(sql, (err, result) => {
         if(err) throw err;
+        fetchCart(request.body.userId, response)
     });
 });
 
