@@ -92,6 +92,50 @@ app.post("/api/authentication", (request, response) => {
     }
 });
 
+app.post("/api/cart/add", (request, response) => {
+    let sql = "SELECT * FROM cart";
+    db.query(sql, (err, result) => {
+        if(err) throw err;
+        console.log("add to cart request was made")
+        console.log(result);
+
+        const allCarts = result;
+
+        const latestCart = findLatestCartFromUser(request.body.userId, allCarts);
+
+        //don't think I can have multiple responses
+        //response.send(latestCart); //this somehow redirects the product page to the card page (which needs a valid logged in user id and freaks out if it doesn't get it)
+                        //never mind I had a /cart href in the addToCart button
+
+        console.log("added product id:    " + request.body.productId);
+
+        const similarItems = latestCart.filter((record => record.productId == request.body.productId)); // == because id types may not be the same
+
+        console.log(similarItems)
+
+        console.log("+++latest cart before +++ :    " + latestCart)
+
+        if(similarItems.length > 0){
+            const addToCartId = similarItems[0].addToCartId;
+            const newSql = "UPDATE cart SET quantity = quantity + 1 WHERE addToCartId = " + addToCartId;
+            db.query(newSql, (err, result) => {
+                if(err) throw err;
+
+                response.send(result);
+            });
+        } else {
+            console.log("+++latest cart+++ :    " + latestCart)
+            const newAddToCartId = createNewCartAdditionId(allCarts);
+            console.log(newAddToCartId);
+
+
+
+            //########## ALL THAT'S NEEDED IS TO ADD THE ITEM TO THE CART TABLE    too tired, do it tomorrow ##############
+        }
+    });
+});
+
+
 
 //helpers
 const fetchCart = (userId, response) => {
@@ -101,10 +145,12 @@ const fetchCart = (userId, response) => {
             if(err) throw err;
             console.log(cartResult);
 
-            const cartedItemsFromUser = cartResult.filter(item => item.userId == userId); // == because not same type
-            const sortedItems = cartedItemsFromUser.sort((a, b) => a.cartId - b.cartId);
-            const highestCartId = sortedItems[sortedItems.length - 1].cartId; //boy these arrays better not be empty
-            const latestCartOfItems = sortedItems.filter(item => item.cartId === highestCartId); //I should probably use the unsorted array for authenticity
+            // const cartedItemsFromUser = cartResult.filter(item => item.userId == userId); // == because not same type
+            // const sortedItems = cartedItemsFromUser.sort((a, b) => a.cartId - b.cartId);
+            // const highestCartId = sortedItems[sortedItems.length - 1].cartId; //boy these arrays better not be empty
+            // const latestCartOfItems = sortedItems.filter(item => item.cartId === highestCartId); //I should probably use the unsorted array for authenticity
+
+            const latestCartOfItems = findLatestCartFromUser(userId, cartResult);
 
             let productSql = "SELECT id, title, price, discount, image FROM products";
             db.query(productSql, (err, productsResult) => {
@@ -125,11 +171,26 @@ const fetchCart = (userId, response) => {
             });
         });
     } else {
-        response.end();
+        response.send("server: not logged in"); //in the future I should make it that the user doesn't have to be logged in
     }
 }
 
+const findLatestCartFromUser = (userId, cartData) => { //needs to determine if the cart is active, even if it's the latest (could be from old login)
+    const cartedItemsFromUser = cartData.filter(item => item.userId == userId); // == because not same type
+    const sortedItems = cartedItemsFromUser.sort((a, b) => a.cartId - b.cartId);
+    const highestCartId = sortedItems[sortedItems.length - 1].cartId; 
+    const latestCartOfItems = sortedItems.filter(item => item.cartId === highestCartId); 
+    return latestCartOfItems;
+}
 
+const createNewCartAdditionId = (cartData) => {
+    console.log("cart data:   " + cartData)
+    const sortedByAdToCartId = cartData.sort((a, b) => a.addToCartId - b.addToCartId);
+    console.log("sorted purchases:    " + sortedByAdToCartId);
+    const index = sortedByAdToCartId.length - 1;
+    const latestPurchaseId = sortedByAdToCartId[index].addToCartId;
+    return latestPurchaseId + 1;
+}
 
 app.listen("5001", () => {
     console.log("running on port 5001...");
