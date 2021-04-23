@@ -17,25 +17,30 @@ const app = express();
 app.use(express.json()); //apparently these are important
 app.use(express.urlencoded({extended: false}));
 
-app.get("/api/products", (req, res) => {
-    let sql = "SELECT * FROM products";
-    db.query(sql, (err, result) => {
-        if(err) throw err;
-        //console.log(result);
-        res.json(result);
-    });
-});
+// app.get("/api/products", (req, res) => {
+//     let sql = "SELECT * FROM products";
+//     db.query(sql, (err, result) => {
+//         if(err) throw err;
+//         //console.log(result);
+//         res.json(result);
+//     });
+// });
 
-app.get("/api/products/:id", (request, response) => {
-    const reqId = request.params.id;
-    let sql = "SELECT " + reqId + " FROM products";
-    db.query(sql, (err, result) => {
-        if(err) throw err;
-        response.json(result);
-    });
-});
+require('./routes/products').get(app, db);
 
-//app.get("/api/products/")
+
+
+// app.get("/api/products/:id", (request, response) => {
+//     const reqId = request.params.id;
+//     let sql = "SELECT " + reqId + " FROM products";
+//     db.query(sql, (err, result) => {
+//         if(err) throw err;
+//         response.json(result);
+//     });
+// });
+
+require('./routes/products').getById(app, db);
+
 
 app.post("/api/cart", (request, response) => { //either this thing or the cart route are too flaky, I have to write tests for them
     console.log(request.body)
@@ -128,9 +133,23 @@ app.post("/api/cart/add", (request, response) => {
             const newAddToCartId = createNewCartAdditionId(allCarts);
             console.log(newAddToCartId);
 
-
-
             //########## ALL THAT'S NEEDED IS TO ADD THE ITEM TO THE CART TABLE    too tired, do it tomorrow ##############
+
+            const latestCartId = latestCart[0].cartId; //any element will do, they all have the same id
+            const addRecordSQL = `
+                INSERT INTO cart
+                    (addToCartId, cartId, userId, orderDate, productId, quantity)
+                VALUES
+                    (${newAddToCartId}, ${latestCartId}, ${request.body.userId}, 666, ${request.body.productId}, 1)
+            `
+
+            console.log("the add sql is:     " + addRecordSQL);
+
+            db.query(addRecordSQL, (err, result) => {
+                if(err) throw err;
+
+                response.send("new item kind added to cart")
+            });
         }
     });
 });
