@@ -42,6 +42,10 @@ require('./routes/products').get(app, db);
 require('./routes/products').getById(app, db);
 
 
+require('./routes/products').search(app, db);
+
+
+
 app.post("/api/cart", (request, response) => { //either this thing or the cart route are too flaky, I have to write tests for them
     console.log(request.body)
     id = request.body.id;
