@@ -1,4 +1,4 @@
-const { request, response } = require("express");
+const { request, response } = require("express"); //???
 
 const get = (app, db) => {
     app.get("/api/products", (req, res) => {
@@ -26,7 +26,7 @@ const search = (app, db) => { //this only works for exact words for now (e.g. if
         const searchString = request.body.title;
         console.log(searchString + "     " + typeof searchString);
         sql = `
-            SELECT id 
+            SELECT * 
             FROM products
             WHERE MATCH(title)
             AGAINST("${searchString}")
